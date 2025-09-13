@@ -15,7 +15,7 @@ A non-profit organization has requested to build a software application that wil
 The software must include the following components:
 
     Login (Allow volunteers and administrators to register if not already registered)
-    User Registration (Initially only username and password, followed by email verification)
+    User Registration (Initially only email and password, followed by email verification)
     User Profile Management (After registration, users should log in to complete their profile, including location, skills, preferences, and availability)
     Event Management (Administrators can create and manage events, specifying required skills, location, and urgency)
     Volunteer Matching (A module that matches volunteers to events/tasks based on their profiles and the event requirements)
@@ -38,7 +38,7 @@ For the technology stack, I would use Next.js for the backend and frontend. Next
 
 Discuss which development methodology you will use and why.
 
-I am working alone and am going to finish this in an afternoon. So I don't need any particular development methodology. I will just work on it in a linear fashion, starting with the backend and then moving to the frontend. If this were a larger project where I worked with others, probably agile development would be best, because its the one I am most familiar with from other projects.
+If this were a larger project where I worked with others, probably agile development would be best, because its the one I am most familiar with from other projects.
 
 Discuss how this methodology will help manage the project effectively.
 
@@ -75,7 +75,7 @@ Provide a high-level design or architecture of the solution you are proposing.
    - Notification routes (trigger email notifications)
 
 3. **Database (PostgreSQL + Prisma)**:
-   - User table (username, password, email, role, location)
+   - User table (email, password, email, role, location)
    - Profile table (skills, preferences, availability)
    - Event table (requirements, location, urgency)
    - Volunteer history table (assignments, participation)
