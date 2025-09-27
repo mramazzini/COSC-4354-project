@@ -32,7 +32,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   if (!initialized) return <Loading />;
 
   return (
-    <div>
+    <div className="p-4">
       {initialized && (
         <div className="tabs tabs-box mb-4 border border-primary">
           {Routes.dashboardTabs.map((label, index) => (

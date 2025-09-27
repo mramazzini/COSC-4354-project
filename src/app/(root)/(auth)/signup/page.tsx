@@ -2,8 +2,16 @@ import SignupForm from "@/components/Forms/SignupForm";
 
 const SignupPage = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <SignupForm />
+    <div
+      className="hero min-h-screen"
+      style={{
+        backgroundImage: "url(images/volunteer2.jpg)",
+      }}
+    >
+      <div className="hero-overlay"></div>
+      <div className="hero-content  text-center">
+        <SignupForm />
+      </div>
     </div>
   );
 };

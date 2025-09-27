@@ -2,8 +2,16 @@ import LoginForm from "@/components/Forms/LoginForm";
 
 const LoginPage = () => {
   return (
-    <div className="flex h-screen w-full items-center justify-center">
-      <LoginForm />
+    <div
+      className="hero min-h-screen"
+      style={{
+        backgroundImage: "url(images/volunteer.jpg)",
+      }}
+    >
+      <div className="hero-overlay"></div>
+      <div className="hero-content  text-center">
+        <LoginForm />
+      </div>
     </div>
   );
 };
