@@ -1,65 +1,157 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import EventManagementForm, {
   EventFormValues,
   Urgency,
 } from "@/components/Forms/EventManagementForm";
+import {
+  useUpdateEventMutation,
+  useGetUpcomingEventsQuery,
+} from "@/lib/services/eventApi";
+import { AdminGuard } from "@/components/Auth/AdminGuard";
 
 const EventManagementPage = () => {
-  // Toggle this to quickly switch between "edit" (prefilled) and "create" (blank)
-  const useEditDemo = true;
+  const [selectedId, setSelectedId] = useState<string>("new");
 
-  // Demo skill options
-  const allSkills = [
-    "Logistics",
-    "First Aid",
-    "Cooking",
-    "Childcare",
-    "Spanish",
-    "Photography",
-    "Crowd Management",
-    "Event Setup",
-  ];
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Helper for YYYY-MM-DD
+  const { data: events = [], isLoading: isLoadingEvents } =
+    useGetUpcomingEventsQuery();
+
+  const [updateEvent, { isLoading: isUpdating }] = useUpdateEventMutation();
+
   const toDateInput = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
       d.getDate()
     ).padStart(2, "0")}`;
 
+  const allSkills = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          events.flatMap((e) => e.requiredSkills.map((s) => String(s).trim()))
+        )
+      ).sort(),
+    [events]
+  );
+
   const initialValues: Partial<EventFormValues> | undefined = useMemo(() => {
-    if (!useEditDemo) return undefined; // blank create form
+    if (selectedId === "new") return undefined;
+    const evt = events.find((e) => e.id === selectedId);
+    if (!evt) return undefined;
 
-    const inTwoWeeks = new Date();
-    inTwoWeeks.setDate(inTwoWeeks.getDate() + 14);
-
+    const date = new Date(evt.dateIsoString);
     return {
-      id: 101,
-      name: "Community Park Cleanup",
-      description:
-        "Join us to remove debris, trim light brush, and refresh signage on the east trail. Gloves provided.",
-      location:
-        "123 Greenway Ave, Houston, TX 77002 — Meet at the pavilion near the east lot.",
-      requiredSkills: ["Logistics", "Event Setup", "First Aid"],
-      urgency: "Medium" as Urgency,
-      date: toDateInput(inTwoWeeks),
+      id: evt.id,
+      name: evt.name,
+      description: evt.description,
+      location: evt.location,
+      requiredSkills: evt.requiredSkills.map((s) => String(s)),
+      urgency: String(evt.urgency) as Urgency,
+      date: toDateInput(date),
     };
-  }, [useEditDemo]);
+  }, [selectedId, events]);
+
+  const handleSubmit = useCallback(
+    async (vals: EventFormValues) => {
+      setSuccessMessage(null);
+      setErrorMessage(null);
+
+      const dateUtc = new Date(`${vals.date}T09:00:00`).toISOString();
+
+      try {
+        await updateEvent({
+          id: selectedId === "new" ? undefined : selectedId,
+          name: vals.name.trim(),
+          description: vals.description.trim(),
+          location: vals.location.trim(),
+          requiredSkills: vals.requiredSkills,
+          urgency: vals.urgency as Urgency,
+          dateUtc,
+        }).unwrap();
+        setSuccessMessage("Event updated successfully.");
+      } catch (err) {
+        console.error("Failed to save event", err);
+        setErrorMessage("Failed to save event. Please try again.");
+      }
+    },
+    [selectedId, updateEvent]
+  );
+
+  const isSaving = isUpdating;
+
+  const currentModeTitle =
+    selectedId === "new" || !initialValues?.id ? "Create Event" : "Edit Event";
 
   return (
-    <div className="mx-auto max-w-3xl p-4">
-      <EventManagementForm
-        initialValues={initialValues}
-        allSkills={allSkills}
-        onSubmit={async (vals) => {
-          // Demo handler: pretend to save
-          console.log("Submitted demo values:", vals);
-          alert(`Submitted!\n\n${JSON.stringify(vals, null, 2)}`);
-        }}
-        onCancel={() => alert("Canceled")}
-      />
-    </div>
+    <AdminGuard>
+      <div className="mx-auto max-w-3xl p-4 space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">{currentModeTitle}</h1>
+            <p className="text-sm text-base-content/70">
+              Choose an existing event to edit, or start a new one.
+            </p>
+          </div>
+
+          <div className="flex flex-col items-end gap-2">
+            <select
+              className="select select-bordered select-sm w-full sm:w-64"
+              value={selectedId}
+              onChange={(e) => {
+                setSuccessMessage(null);
+                setErrorMessage(null);
+                setSelectedId(e.target.value);
+              }}
+            >
+              <option value="new">➕ New event</option>
+              {events.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+
+            {isSaving && (
+              <span className="text-xs italic text-base-content/70">
+                Saving changes…
+              </span>
+            )}
+            {isLoadingEvents && (
+              <span className="text-xs italic text-base-content/70">
+                Loading events…
+              </span>
+            )}
+          </div>
+        </div>
+
+        {successMessage && (
+          <div className="alert alert-success text-sm">
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        {errorMessage && (
+          <div className="alert alert-error text-sm">
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        <EventManagementForm
+          initialValues={initialValues}
+          allSkills={allSkills}
+          onSubmit={handleSubmit}
+          onCancel={() => {
+            // simple cancel: reset selection back to "new"
+            setSelectedId("new");
+            setSuccessMessage(null);
+            setErrorMessage(null);
+          }}
+        />
+      </div>
+    </AdminGuard>
   );
 };
 

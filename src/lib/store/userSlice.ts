@@ -1,4 +1,4 @@
-import { User, UserRole } from "@/types/Models.types";
+import { User, UserRole } from "@prisma/client";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export interface UserState {
@@ -15,11 +15,11 @@ const initialState: UserState = {
     lastName: "",
     addressOne: "",
     addressTwo: "",
+    password: "",
     city: "",
     state: "",
     zipCode: "",
     skills: [],
-    otherSkills: [],
     preferences: "",
     availability: [],
     role: UserRole.Volunteer,

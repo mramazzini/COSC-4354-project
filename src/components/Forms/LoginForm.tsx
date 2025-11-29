@@ -14,10 +14,12 @@ const LoginForm = () => {
   const router = useRouter();
 
   const handleLogin = async (values: LoginRequest) => {
-    const res = await login(values).unwrap();
-    if (res.token) {
-      router.push("/");
-    }
+    await login(values)
+      .unwrap()
+      .then(() => {
+        router.push(Routes.dashboard.root);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {

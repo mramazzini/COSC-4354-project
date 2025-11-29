@@ -14,13 +14,15 @@ const SignupForm = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleSignup = async (values: SignupRequest) => {
-    const res = await signup({
+    await signup({
       email: values.email,
       password: values.password,
-    }).unwrap();
-    if (res.token) {
-      router.push("/");
-    }
+    })
+      .unwrap()
+      .then(() => {
+        router.push(Routes.dashboard.root);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {

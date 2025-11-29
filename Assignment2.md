@@ -12,12 +12,12 @@
 
 ## Front End technologies
 
-> React: Useful for building user interfaces with reusable components.
-> Next.js: Provides server-side rendering and static site generation.
-> TailwindCSS and DaisyUI: Very easy to throw UIs together.
-> RTK Query: Simplifies data fetching and state management in React applications.
-> Formik: React library for building and managing forms.
-> Manually validating fields for now, plan on using Yup library to streamline form validation.
+- React: Useful for building user interfaces with reusable components.
+- Next.js: Provides server-side rendering and static site generation.
+- TailwindCSS and DaisyUI: Very easy to throw UIs together.
+- RTK Query: Simplifies data fetching and state management in React applications.
+- Formik: React library for building and managing forms.
+- Manually validating fields for now, plan on using Yup library to streamline form validation.
 
 ## Screenshots
 

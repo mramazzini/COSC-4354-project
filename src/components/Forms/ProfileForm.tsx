@@ -1,10 +1,12 @@
-import { User } from "@/types/Models.types";
+import { User, VolunteerSkill } from "@prisma/client";
 import { Formik } from "formik";
 
 interface ProfileFormProps {
   initialValues: Partial<User>;
-  onSubmit: (values: User) => void;
+  onSubmit: (values: Partial<User>) => void;
 }
+
+const allSkills = Object.values(VolunteerSkill);
 
 const ProfileForm: React.FC<ProfileFormProps> = ({
   initialValues,
@@ -14,13 +16,21 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
     <Formik
       initialValues={initialValues}
       enableReinitialize
-      onSubmit={(values, actions) => {
+      onSubmit={async (values, actions) => {
+        console.log("Submitting profile form with values:", values);
+        await onSubmit(values);
         actions.setSubmitting(false);
-        onSubmit(values as User);
       }}
     >
-      {({ values, handleChange, handleSubmit, isSubmitting }) => (
+      {({
+        values,
+        handleChange,
+        handleSubmit,
+        isSubmitting,
+        setFieldValue,
+      }) => (
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* First Name */}
           <div>
             <label
               className="block text-sm font-medium mb-1"
@@ -29,7 +39,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               First Name
             </label>
             <input
-              type="text"
               id="firstName"
               name="firstName"
               value={values.firstName || ""}
@@ -37,6 +46,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               className="input input-bordered w-full"
             />
           </div>
+          {/* Last Name */}
           <div>
             <label
               className="block text-sm font-medium mb-1"
@@ -45,7 +55,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               Last Name
             </label>
             <input
-              type="text"
               id="lastName"
               name="lastName"
               value={values.lastName || ""}
@@ -53,6 +62,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               className="input input-bordered w-full"
             />
           </div>
+          {/* Address One */}
           <div>
             <label
               className="block text-sm font-medium mb-1"
@@ -61,7 +71,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               Address Line 1
             </label>
             <input
-              type="text"
               id="addressOne"
               name="addressOne"
               value={values.addressOne || ""}
@@ -69,6 +78,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               className="input input-bordered w-full"
             />
           </div>
+          {/* Address Two */}
           <div>
             <label
               className="block text-sm font-medium mb-1"
@@ -77,7 +87,6 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               Address Line 2
             </label>
             <input
-              type="text"
               id="addressTwo"
               name="addressTwo"
               value={values.addressTwo || ""}
@@ -85,12 +94,12 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               className="input input-bordered w-full"
             />
           </div>
+          {/* City */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="city">
               City
             </label>
             <input
-              type="text"
               id="city"
               name="city"
               value={values.city || ""}
@@ -98,38 +107,66 @@ const ProfileForm: React.FC<ProfileFormProps> = ({
               className="input input-bordered w-full"
             />
           </div>
+          {/* State */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="state">
               State
             </label>
             <input
-              type="text"
               id="state"
               name="state"
               value={values.state || ""}
               onChange={handleChange}
               className="input input-bordered w-full"
               maxLength={2}
-              placeholder="e.g., CA"
             />
           </div>
-
+          {/* Zip */}
           <div>
             <label className="block text-sm font-medium mb-1" htmlFor="zipCode">
               Zip Code
             </label>
             <input
-              type="text"
               id="zipCode"
               name="zipCode"
               value={values.zipCode || ""}
               onChange={handleChange}
               className="input input-bordered w-full"
               maxLength={9}
-              placeholder="e.g., 12345 or 12345-6789"
             />
           </div>
-
+          {/* Skills (multi-select) */}
+          <div>
+            <span className="block text-sm font-medium mb-1">Skills</span>
+            <div className="flex flex-wrap gap-2">
+              {allSkills.map((skill) => {
+                const selected = values.skills?.includes(skill) ?? false;
+                return (
+                  <label
+                    key={skill}
+                    className="flex items-center gap-2 text-sm border rounded px-2 py-1 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={(e) => {
+                        const current = values.skills ?? [];
+                        if (e.target.checked) {
+                          setFieldValue("skills", [...current, skill]);
+                        } else {
+                          setFieldValue(
+                            "skills",
+                            current.filter((s) => s !== skill)
+                          );
+                        }
+                      }}
+                    />
+                    <span>{skill}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <div>
             <label
               className="block text-sm font-medium mb-1"

@@ -1,9 +1,19 @@
 "use client";
+import { useEffect } from "react";
 import { Loading } from "@/components/UI/Loading";
-import { useGetNotificationsQuery } from "@/lib/services/notificationApi";
+import {
+  useGetNotificationsQuery,
+  useMarkAllNotificationsReadMutation,
+} from "@/lib/services/eventApi";
 
 const NotificationPage = () => {
   const { data, isLoading } = useGetNotificationsQuery();
+  const [markAllRead] = useMarkAllNotificationsReadMutation();
+
+  useEffect(() => {
+    markAllRead();
+  }, [markAllRead]);
+
   if (isLoading) return <Loading />;
 
   return (

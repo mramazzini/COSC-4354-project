@@ -1,45 +1,39 @@
 "use client";
-import { useMemo, useState } from "react";
-import { Event, EventUrgency, VolunteerSkill } from "@/types/Models.types";
-type EventWithTime = Event & { timeAtEvent: string };
 
-const history: EventWithTime[] = [
-  {
-    id: "1",
-    name: "Community Clean-Up",
-    description: "Participated in a local park clean-up event.",
-    location: "Central Park",
-    requiredSkills: [VolunteerSkill.Gardening, VolunteerSkill.Construction],
-    date: "2023-09-15T10:00:00Z",
-    urgency: EventUrgency.Medium,
-    timeAtEvent: "3 hours",
-  },
-  {
-    id: "2",
-    name: "Food Drive Assistance",
-    description: "Helped organize and distribute food donations.",
-    location: "Community Center",
-    requiredSkills: [VolunteerSkill.Driving],
-    date: "2023-10-05T14:00:00Z",
-    urgency: EventUrgency.High,
-    timeAtEvent: "4 hours",
-  },
-  {
-    id: "3",
-    name: "Elderly Care Visit",
-    description: "Spent time with elderly residents at a care home.",
-    location: "Sunrise Care Home",
-    requiredSkills: [VolunteerSkill.ElderlyCare],
-    date: "2023-11-20T09:00:00Z",
-    urgency: EventUrgency.Low,
-    timeAtEvent: "2 hours",
-  },
+import { useGetVolunteerHistoryQuery } from "@/lib/services/eventApi";
+import { useMemo, useState } from "react";
+
+const volunteerSkillLabels: string[] = [
+  "Cooking",
+  "Driving",
+  "Teaching",
+  "Cleaning",
+  "Fundraising",
+  "MedicalAid",
+  "Counseling",
+  "EventPlanning",
+  "ChildCare",
+  "ElderlyCare",
+  "AnimalCare",
+  "Construction",
+  "Gardening",
+  "ITSupport",
+  "Marketing",
+  "Photography",
+  "Writing",
+  "Translation",
+  "LegalAid",
 ];
 
-const urgencyColor = (u: string) => {
-  const key = u.toLowerCase();
-  if (key.includes("high")) return "badge-error";
-  if (key.includes("medium")) return "badge-warning";
+const urgencyLabels: string[] = ["Low", "Medium", "High"];
+
+const skillLabel = (s: number) => volunteerSkillLabels[s] ?? `Skill ${s}`;
+const urgencyLabel = (u: number) => urgencyLabels[u] ?? `Urgency ${u}`;
+
+const urgencyColor = (u: number) => {
+  const label = urgencyLabel(u).toLowerCase();
+  if (label.includes("high")) return "badge-error";
+  if (label.includes("medium")) return "badge-warning";
   return "badge-success";
 };
 
@@ -49,51 +43,71 @@ const HistoryPage = () => {
   const [urgencyFilter, setUrgencyFilter] = useState<string>("All");
   const [sort, setSort] = useState<"newest" | "oldest" | "urgency">("newest");
 
+  const { data: history = [] } = useGetVolunteerHistoryQuery();
+
   const allSkills = useMemo(
     () =>
       Array.from(
-        new Set(history.flatMap((e) => e.requiredSkills.map((s) => s.trim())))
+        new Set(
+          history.flatMap((e) =>
+            e.requiredSkills.map((s: number) => skillLabel(s))
+          )
+        )
       ).sort(),
-    []
+    [history]
   );
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
 
     let list = history.filter((e) => {
+      const name = e.name.toLowerCase();
+      const description = e.description.toLowerCase();
+      const location = e.location.toLowerCase();
+      const urgencyText = urgencyLabel(e.urgency).toLowerCase();
+
       const matchesQuery =
         !q ||
-        e.name.toLowerCase().includes(q) ||
-        e.description.toLowerCase().includes(q) ||
-        e.location.toLowerCase().includes(q) ||
-        e.requiredSkills.some((s) => s.toLowerCase().includes(q));
+        name.includes(q) ||
+        description.includes(q) ||
+        location.includes(q);
 
       const matchesSkill =
         skillFilter === "All" ||
-        e.requiredSkills.includes(skillFilter as VolunteerSkill);
+        e.requiredSkills
+          .map((s: number) => skillLabel(s))
+          .includes(skillFilter);
 
       const matchesUrgency =
-        urgencyFilter === "All" ||
-        e.urgency.toLowerCase() === urgencyFilter.toLowerCase();
+        urgencyFilter === "All" || urgencyText === urgencyFilter.toLowerCase();
 
       return matchesQuery && matchesSkill && matchesUrgency;
     });
 
     if (sort === "newest") {
-      list = list.sort((a, b) => +new Date(b.date) - +new Date(a.date));
+      list = list
+        .slice()
+        .sort(
+          (a, b) => +new Date(b.dateIsoString) - +new Date(a.dateIsoString)
+        );
     } else if (sort === "oldest") {
-      list = list.sort((a, b) => +new Date(a.date) - +new Date(b.date));
+      list = list
+        .slice()
+        .sort(
+          (a, b) => +new Date(a.dateIsoString) - +new Date(b.dateIsoString)
+        );
     } else if (sort === "urgency") {
-      const rank = (u: string) =>
-        u.toLowerCase().includes("high")
-          ? 0
-          : u.toLowerCase().includes("medium")
-          ? 1
-          : 2;
-      list = list.sort((a, b) => rank(a.urgency) - rank(b.urgency));
+      const rank = (u: number) => {
+        const label = urgencyLabel(u).toLowerCase();
+        if (label.includes("high")) return 0;
+        if (label.includes("medium")) return 1;
+        return 2;
+      };
+      list = list.slice().sort((a, b) => rank(a.urgency) - rank(b.urgency));
     }
+
     return list;
-  }, [query, skillFilter, urgencyFilter, sort]);
+  }, [query, history, sort, skillFilter, urgencyFilter]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6">
@@ -168,7 +182,7 @@ const HistoryPage = () => {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {filtered.map((event) => {
-            const date = new Date(event.date);
+            const date = new Date(event.dateIsoString);
             const pretty = date.toLocaleDateString(undefined, {
               year: "numeric",
               month: "long",
@@ -188,7 +202,7 @@ const HistoryPage = () => {
                         event.urgency
                       )} badge-lg`}
                     >
-                      {event.urgency}
+                      {urgencyLabel(event.urgency)}
                     </div>
                   </div>
 
@@ -203,22 +217,15 @@ const HistoryPage = () => {
                     <Detail
                       label="Required Skills"
                       value={
-                        <div className="flex flex-wrap gap-2">
-                          {event.requiredSkills.map((s) => (
+                        <span className="flex flex-wrap gap-2">
+                          {event.requiredSkills.map((s: number) => (
                             <span key={s} className="badge badge-outline">
-                              {s}
+                              {skillLabel(s)}
                             </span>
                           ))}
-                        </div>
+                        </span>
                       }
                     />
-                  </div>
-
-                  <div className="card-actions justify-end pt-2">
-                    <button className="btn btn-ghost btn-sm">Details</button>
-                    <button className="btn btn-primary btn-sm">
-                      View Summary
-                    </button>
                   </div>
                 </div>
               </div>

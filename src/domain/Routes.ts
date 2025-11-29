@@ -12,6 +12,8 @@ export class Routes {
     profile: "/dashboard/profile",
     notifications: "/dashboard/notifications",
     eventManagement: "/dashboard/event-management",
+    match: "/dashboard/match",
+    report: "/dashboard/report",
   };
 
   static dashboardTabs = [
@@ -20,6 +22,8 @@ export class Routes {
     "profile",
     "notifications",
     "event-management",
+    "match",
+    "report",
   ];
 
   static buildDashboardUrl = (
